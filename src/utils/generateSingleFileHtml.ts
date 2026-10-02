@@ -1,0 +1,920 @@
+/**
+ * Generates a complete, self-contained single-file HTML application for Fluid Statics.
+ * Includes all inline CSS and JS with Canvas rendering, KaTeX math typesetting, and Poppins font.
+ */
+
+export function getSingleFileHtml(): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Static Fluids Physics Simulation - PhET Interactive Style</title>
+  <!-- Google Fonts: Poppins -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <!-- KaTeX for high-performance LaTeX rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+
+  <style>
+    /* ==========================================================================
+       GLOBAL STYLING & RESET
+       ========================================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    body {
+      background-color: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+      padding: 12px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #0f172a;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 2px 8px;
+      border-radius: 999px;
+    }
+    .unit-switch-group {
+      display: flex;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 3px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      gap: 2px;
+    }
+    .unit-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      min-height: 32px;
+    }
+    .unit-btn.active {
+      background: #ffffff;
+      color: #2563eb;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+    }
+    main {
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 20px 16px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      background: #ffffff;
+      padding: 6px;
+      border-radius: 14px;
+      border: 1px solid #e2e8f0;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      flex: 1;
+      min-width: 180px;
+      min-height: 44px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: transparent;
+      color: #64748b;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.15s ease;
+    }
+    .tab-btn.active {
+      background: #2563eb;
+      color: #ffffff;
+      box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+    }
+    .tab-content {
+      display: none;
+      width: 100%;
+    }
+    .tab-content.active {
+      display: grid;
+      grid-template-columns: 7fr 5fr;
+      gap: 24px;
+    }
+    @media (max-width: 960px) {
+      .tab-content.active {
+        grid-template-columns: 1fr;
+      }
+    }
+    .card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+    }
+    .canvas-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+    .canvas-container {
+      width: 100%;
+      height: 460px;
+      background: #f8fafc;
+      border-radius: 12px;
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+      position: relative;
+    }
+    canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+    }
+    .slider-group {
+      margin-top: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #334155;
+    }
+    .slider-header span.val {
+      font-weight: 700;
+      color: #2563eb;
+      font-family: monospace;
+    }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 999px;
+      outline: none;
+      min-height: 28px;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #2563eb;
+      box-shadow: 0 2px 6px rgba(37,99,235,0.35);
+      border: 2px solid #ffffff;
+      cursor: pointer;
+    }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .option-btn {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #cbd5e1;
+      background: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      text-align: left;
+      min-height: 42px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .option-btn:hover {
+      background: #f1f5f9;
+    }
+    .option-btn.active {
+      border-color: #2563eb;
+      background: #eff6ff;
+      color: #1e40af;
+      box-shadow: 0 0 0 1px #2563eb;
+    }
+    .option-btn span.sub {
+      font-size: 0.68rem;
+      font-weight: 400;
+      color: #64748b;
+    }
+    .formula-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+      margin-top: 14px;
+      font-size: 0.82rem;
+      text-align: center;
+    }
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .status-float { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .status-sink { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+    .status-neutral { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header>
+    <div class="brand-title">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12c.6 0 1.2-.4 1.5-.9 1.1-1.8 3.5-2.1 5-.7.8.8 1.9 1.2 3 1.2s2.2-.4 3-1.2c1.5-1.4 3.9-1.1 5 .7.3.5.9.9 1.5.9"></path>
+        <path d="M2 18c.6 0 1.2-.4 1.5-.9 1.1-1.8 3.5-2.1 5-.7.8.8 1.9 1.2 3 1.2s2.2-.4 3-1.2c1.5-1.4 3.9-1.1 5 .7.3.5.9.9 1.5.9"></path>
+      </svg>
+      <span>Static Fluids Lab</span>
+      <span class="badge">PhET Interactive</span>
+    </div>
+
+    <!-- Pressure Unit Switcher -->
+    <div class="unit-switch-group">
+      <span style="padding: 0 6px; color: #64748b; font-weight: 500;">Unit:</span>
+      <button class="unit-btn active" data-unit="kPa">kPa</button>
+      <button class="unit-btn" data-unit="Pa">Pa</button>
+      <button class="unit-btn" data-unit="bar">bar</button>
+      <button class="unit-btn" data-unit="atm">atm</button>
+      <button class="unit-btn" data-unit="psi">psi</button>
+    </div>
+  </header>
+
+  <!-- MAIN LAB VIEWPORT -->
+  <main>
+    <!-- TAB NAVIGATION -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="tab-buoyancy">
+        <span>1. Density & Buoyancy</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-pressure">
+        <span>2. Hydrostatic Pressure</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-pascal">
+        <span>3. Pascal's Hydraulic Lift</span>
+      </button>
+    </div>
+
+    <!-- ==========================================
+         TAB 1: DENSITY & BUOYANCY LAB
+         ========================================== -->
+    <div id="tab-buoyancy" class="tab-content active">
+      <!-- Left: Interactive Canvas Tank -->
+      <div class="card canvas-card">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span id="buoyancy-status" class="status-pill status-float">Floats</span>
+          <span style="font-size: 0.75rem; color: #64748b;">Drag object to submerge</span>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvas-buoyancy"></canvas>
+        </div>
+        <div class="formula-box" style="width: 100%;">
+          <div id="latex-buoyancy-formula"></div>
+        </div>
+      </div>
+
+      <!-- Right: Controls -->
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Fluid Type</h3>
+          <div class="btn-grid">
+            <button class="option-btn active" data-fluid="water">
+              <span>Fresh Water</span>
+              <span class="sub">1000 kg/m³</span>
+            </button>
+            <button class="option-btn" data-fluid="gasoline">
+              <span>Gasoline</span>
+              <span class="sub">680 kg/m³</span>
+            </button>
+            <button class="option-btn" data-fluid="olive_oil">
+              <span>Olive Oil</span>
+              <span class="sub">920 kg/m³</span>
+            </button>
+            <button class="option-btn" data-fluid="honey">
+              <span>Honey</span>
+              <span class="sub">1420 kg/m³</span>
+            </button>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Fluid Density (ρ_fluid)</span>
+              <span class="val" id="val-fluid-density">1000 kg/m³</span>
+            </div>
+            <input type="range" id="range-fluid-density" min="400" max="2000" step="10" value="1000">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Submerged Object Material</h3>
+          <div class="btn-grid">
+            <button class="option-btn active" data-mat="wood">
+              <span>Wood</span>
+              <span class="sub">500 kg/m³</span>
+            </button>
+            <button class="option-btn" data-mat="ice">
+              <span>Ice</span>
+              <span class="sub">917 kg/m³</span>
+            </button>
+            <button class="option-btn" data-mat="aluminum">
+              <span>Aluminum</span>
+              <span class="sub">2700 kg/m³</span>
+            </button>
+            <button class="option-btn" data-mat="brick">
+              <span>Brick</span>
+              <span class="sub">2000 kg/m³</span>
+            </button>
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Object Mass (m)</span>
+              <span class="val" id="val-mass">2.5 kg</span>
+            </div>
+            <input type="range" id="range-mass" min="0.2" max="25" step="0.1" value="2.5">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Object Volume (V)</span>
+              <span class="val" id="val-volume">5.0 L</span>
+            </div>
+            <input type="range" id="range-volume" min="0.5" max="15" step="0.1" value="5.0">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         TAB 2: HYDROSTATIC PRESSURE LAB
+         ========================================== -->
+    <div id="tab-pressure" class="tab-content">
+      <div class="card canvas-card">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 0.8rem; font-weight: 600; color: #0284c7;">Movable Gauge Probe</span>
+          <label style="font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+            <input type="checkbox" id="check-atmosphere" checked> Atmospheric Pressure (101.3 kPa)
+          </label>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvas-pressure"></canvas>
+        </div>
+        <div class="formula-box" style="width: 100%;">
+          <div id="latex-pressure-formula"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Gravity (g)</h3>
+          <div class="btn-grid">
+            <button class="option-btn active" data-gravity="9.8">
+              <span>Earth</span>
+              <span class="sub">9.8 m/s²</span>
+            </button>
+            <button class="option-btn" data-gravity="1.62">
+              <span>Moon</span>
+              <span class="sub">1.6 m/s²</span>
+            </button>
+            <button class="option-btn" data-gravity="24.8">
+              <span>Jupiter</span>
+              <span class="sub">24.8 m/s²</span>
+            </button>
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Gravity Field</span>
+              <span class="val" id="val-gravity">9.80 m/s²</span>
+            </div>
+            <input type="range" id="range-gravity" min="0" max="25" step="0.1" value="9.8">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Probe Depth Controller</h3>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Sensor Depth (h)</span>
+              <span class="val" id="val-depth">2.50 m</span>
+            </div>
+            <input type="range" id="range-depth" min="0" max="5" step="0.05" value="2.5">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         TAB 3: PASCAL'S HYDRAULIC LIFT
+         ========================================== -->
+    <div id="tab-pascal" class="tab-content">
+      <div class="card canvas-card">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+          <span style="font-size: 0.8rem; font-weight: 700; color: #4338ca;">Pascal's Law: P₁ = P₂</span>
+          <button id="btn-pump" style="padding: 4px 12px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer;">
+            Pump Piston 1
+          </button>
+        </div>
+        <div class="canvas-container">
+          <canvas id="canvas-pascal"></canvas>
+        </div>
+        <div class="formula-box" style="width: 100%;">
+          <div id="latex-pascal-formula"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Piston Surface Areas</h3>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Piston 1 Area (A₁)</span>
+              <span class="val" id="val-a1">0.010 m²</span>
+            </div>
+            <input type="range" id="range-a1" min="0.005" max="0.05" step="0.005" value="0.010">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Piston 2 Area (A₂)</span>
+              <span class="val" id="val-a2">1.00 m²</span>
+            </div>
+            <input type="range" id="range-a2" min="0.1" max="2.0" step="0.05" value="1.00">
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 8px;">Applied Input Force</h3>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Input Force (F₁)</span>
+              <span class="val" id="val-f1">150 N</span>
+            </div>
+            <input type="range" id="range-f1" min="20" max="500" step="10" value="150">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span>Piston 1 Stroke (d₁)</span>
+              <span class="val" id="val-d1">20.0 cm</span>
+            </div>
+            <input type="range" id="range-d1" min="0" max="50" step="1" value="20">
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    /**
+     * FLUID STATICS SIMULATION LOGIC
+     * Pure vanilla JS with Canvas 60fps rendering and KaTeX formula typesetting
+     */
+    let currentUnit = 'kPa';
+    function convertPres(pa) {
+      if (currentUnit === 'kPa') return (pa / 1000).toFixed(2) + ' kPa';
+      if (currentUnit === 'bar') return (pa / 100000).toFixed(3) + ' bar';
+      if (currentUnit === 'atm') return (pa / 101325).toFixed(3) + ' atm';
+      if (currentUnit === 'psi') return (pa / 6894.757).toFixed(2) + ' psi';
+      return pa.toFixed(0) + ' Pa';
+    }
+
+    // Tabs switcher
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        const target = document.getElementById(btn.dataset.tab);
+        if (target) target.classList.add('active');
+      });
+    });
+
+    // Unit switcher
+    document.querySelectorAll('.unit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentUnit = btn.dataset.unit;
+        updateTab2Formulas();
+        updateTab3Formulas();
+      });
+    });
+
+    /* =========================================================================
+       TAB 1 SIMULATION: BUOYANCY & DENSITY
+       ========================================================================= */
+    const canvasB = document.getElementById('canvas-buoyancy');
+    const ctxB = canvasB.getContext('2d');
+    let fluidDensityB = 1000;
+    let massB = 2.5;
+    let volumeLitersB = 5.0;
+    let objYB = 140;
+    let objVyB = 0;
+    let isDraggingB = false;
+
+    function renderBuoyancy() {
+      const w = canvasB.clientWidth;
+      const h = canvasB.clientHeight;
+      if (canvasB.width !== w || canvasB.height !== h) {
+        canvasB.width = w; canvasB.height = h;
+      }
+      ctxB.clearRect(0, 0, w, h);
+
+      const tankLeft = 90, tankRight = w - 90, tankTop = 110, tankBottom = 410;
+      const tankW = tankRight - tankLeft;
+      const waterLevel = 180;
+      const objSize = Math.max(40, Math.min(90, 36 + Math.cbrt(volumeLitersB) * 22));
+
+      // Calculate Submersion
+      const objTop = objYB - objSize / 2;
+      const objBottom = objYB + objSize / 2;
+      let subPx = 0;
+      if (objBottom > waterLevel) {
+        subPx = Math.min(objSize, objBottom - waterLevel);
+      }
+      const subFraction = Math.max(0, Math.min(1, subPx / objSize));
+
+      const volM3 = volumeLitersB * 0.001;
+      const objDensity = massB / volM3;
+      const weight = massB * 9.8;
+      const fb = fluidDensityB * (volM3 * subFraction) * 9.8;
+
+      let fn = 0;
+      if (objBottom >= tankBottom - 2) {
+        objYB = tankBottom - 2 - objSize / 2;
+        if (objVyB > 0) objVyB = 0;
+        fn = Math.max(0, weight - fb);
+      }
+
+      if (!isDraggingB) {
+        const fnet = fb + fn - weight;
+        const accY = (-fnet / massB) * 35;
+        const drag = subFraction > 0 ? (objVyB * 0.08) : 0.01;
+        objVyB += accY * (1 / 60);
+        objVyB *= (1 - drag);
+        objYB += objVyB * (1 / 60);
+        if (objYB < 40) { objYB = 40; objVyB = 0; }
+      }
+
+      // Draw Tank & Fluid
+      ctxB.fillStyle = '#f8fafc';
+      ctxB.fillRect(tankLeft, tankTop, tankW, tankBottom - tankTop);
+      ctxB.fillStyle = 'rgba(56, 189, 248, 0.55)';
+      ctxB.fillRect(tankLeft, waterLevel, tankW, tankBottom - waterLevel);
+
+      // Tank Walls
+      ctxB.strokeStyle = '#334155';
+      ctxB.lineWidth = 4;
+      ctxB.beginPath();
+      ctxB.moveTo(tankLeft, tankTop);
+      ctxB.lineTo(tankLeft, tankBottom);
+      ctxB.lineTo(tankRight, tankBottom);
+      ctxB.lineTo(tankRight, tankTop);
+      ctxB.stroke();
+
+      // Object
+      const objX = (tankLeft + tankRight) / 2;
+      ctxB.fillStyle = objDensity < fluidDensityB ? '#b45309' : '#475569';
+      ctxB.fillRect(objX - objSize / 2, objYB - objSize / 2, objSize, objSize);
+      ctxB.strokeStyle = '#0f172a';
+      ctxB.lineWidth = 2;
+      ctxB.strokeRect(objX - objSize / 2, objYB - objSize / 2, objSize, objSize);
+
+      // Mass label
+      ctxB.fillStyle = '#ffffff';
+      ctxB.font = 'bold 11px Poppins';
+      ctxB.textAlign = 'center';
+      ctxB.fillText(massB.toFixed(1) + ' kg', objX, objYB + 4);
+
+      // Force Vectors
+      // Weight (red, down)
+      ctxB.strokeStyle = '#ef4444';
+      ctxB.fillStyle = '#ef4444';
+      ctxB.lineWidth = 3;
+      ctxB.beginPath();
+      ctxB.moveTo(objX, objYB);
+      ctxB.lineTo(objX, objYB + Math.min(100, weight * 1.5));
+      ctxB.stroke();
+
+      // Buoyant Force (blue, up)
+      if (fb > 1) {
+        ctxB.strokeStyle = '#0284c7';
+        ctxB.beginPath();
+        ctxB.moveTo(objX - 8, objYB);
+        ctxB.lineTo(objX - 8, objYB - Math.min(100, fb * 1.5));
+        ctxB.stroke();
+      }
+
+      // Update status & LaTeX formula
+      const statusEl = document.getElementById('buoyancy-status');
+      if (objDensity < fluidDensityB) {
+        statusEl.className = 'status-pill status-float';
+        statusEl.textContent = 'Floats (' + ((objDensity / fluidDensityB) * 100).toFixed(1) + '% Submerged)';
+      } else {
+        statusEl.className = 'status-pill status-sink';
+        statusEl.textContent = 'Sinks to Floor';
+      }
+
+      if (window.katex) {
+        const latexContainer = document.getElementById('latex-buoyancy-formula');
+        katex.render(
+          '\\\\rho_{\\\\text{obj}} = \\\\frac{' + massB.toFixed(1) + '\\\\text{ kg}}{' + volM3.toFixed(3) + '\\\\text{ m}^3} = ' + objDensity.toFixed(0) + '\\\\text{ kg/m}^3 \\\\quad \\\\big| \\\\quad F_b = ' + fb.toFixed(1) + '\\\\text{ N} \\\\quad (W = ' + weight.toFixed(1) + '\\\\text{ N})',
+          latexContainer,
+          { throwOnError: false }
+        );
+      }
+
+      requestAnimationFrame(renderBuoyancy);
+    }
+    requestAnimationFrame(renderBuoyancy);
+
+    // Pointer events for dragging object in Tab 1
+    canvasB.addEventListener('pointerdown', (e) => {
+      const rect = canvasB.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      if (Math.abs(y - objYB) < 50) {
+        isDraggingB = true;
+        canvasB.setPointerCapture(e.pointerId);
+      }
+    });
+    canvasB.addEventListener('pointermove', (e) => {
+      if (!isDraggingB) return;
+      const rect = canvasB.getBoundingClientRect();
+      objYB = Math.max(50, Math.min(380, e.clientY - rect.top));
+    });
+    canvasB.addEventListener('pointerup', (e) => {
+      isDraggingB = false;
+      try { canvasB.releasePointerCapture(e.pointerId); } catch(err){}
+    });
+
+    // Tab 1 controls
+    document.getElementById('range-fluid-density').addEventListener('input', (e) => {
+      fluidDensityB = parseFloat(e.target.value);
+      document.getElementById('val-fluid-density').textContent = fluidDensityB + ' kg/m³';
+    });
+    document.getElementById('range-mass').addEventListener('input', (e) => {
+      massB = parseFloat(e.target.value);
+      document.getElementById('val-mass').textContent = massB.toFixed(1) + ' kg';
+    });
+    document.getElementById('range-volume').addEventListener('input', (e) => {
+      volumeLitersB = parseFloat(e.target.value);
+      document.getElementById('val-volume').textContent = volumeLitersB.toFixed(1) + ' L';
+    });
+
+    /* =========================================================================
+       TAB 2 SIMULATION: HYDROSTATIC PRESSURE
+       ========================================================================= */
+    const canvasP = document.getElementById('canvas-pressure');
+    const ctxP = canvasP.getContext('2d');
+    let gravityP = 9.8;
+    let depthMetersP = 2.5;
+    let hasAtmosphereP = true;
+
+    function updateTab2Formulas() {
+      if (!window.katex) return;
+      const pAtm = hasAtmosphereP ? 101325 : 0;
+      const pGauge = 1000 * gravityP * depthMetersP;
+      const pTotal = pAtm + pGauge;
+      const latexContainer = document.getElementById('latex-pressure-formula');
+      katex.render(
+        'P_{\\\\text{total}} = P_0 + \\\\rho g h = ' + convertPres(pAtm) + ' + (1000)(' + gravityP.toFixed(1) + ')(' + depthMetersP.toFixed(2) + ') = ' + convertPres(pTotal),
+        latexContainer,
+        { throwOnError: false }
+      );
+    }
+
+    function renderPressure() {
+      const w = canvasP.clientWidth;
+      const h = canvasP.clientHeight;
+      if (canvasP.width !== w || canvasP.height !== h) {
+        canvasP.width = w; canvasP.height = h;
+      }
+      ctxP.clearRect(0, 0, w, h);
+
+      const surfaceY = 120, tankBottom = 420, tankLeft = 100, tankRight = w - 100;
+      const pxPerM = (tankBottom - surfaceY) / 5.0;
+
+      // Draw Fluid
+      const grad = ctxP.createLinearGradient(0, surfaceY, 0, tankBottom);
+      grad.addColorStop(0, 'rgba(56, 189, 248, 0.45)');
+      grad.addColorStop(1, 'rgba(2, 132, 199, 0.85)');
+      ctxP.fillStyle = grad;
+      ctxP.fillRect(tankLeft, surfaceY, tankRight - tankLeft, tankBottom - surfaceY);
+
+      // Tank Outline
+      ctxP.strokeStyle = '#334155';
+      ctxP.lineWidth = 4;
+      ctxP.strokeRect(tankLeft, surfaceY, tankRight - tankLeft, tankBottom - surfaceY);
+
+      // Depth ruler
+      ctxP.fillStyle = '#475569';
+      ctxP.font = '10px Poppins';
+      ctxP.textAlign = 'right';
+      for (let m = 0; m <= 5; m++) {
+        const y = surfaceY + m * pxPerM;
+        ctxP.fillText(m + '.0m', tankLeft - 10, y + 4);
+      }
+
+      // Sensor probe
+      const probeY = surfaceY + depthMetersP * pxPerM;
+      const probeX = (tankLeft + tankRight) / 2;
+
+      ctxP.fillStyle = '#ffffff';
+      ctxP.strokeStyle = '#2563eb';
+      ctxP.lineWidth = 3;
+      ctxP.beginPath();
+      ctxP.arc(probeX, probeY, 14, 0, Math.PI * 2);
+      ctxP.fill();
+      ctxP.stroke();
+
+      const pAtm = hasAtmosphereP ? 101325 : 0;
+      const pGauge = 1000 * gravityP * depthMetersP;
+      const pTotal = pAtm + pGauge;
+
+      ctxP.fillStyle = '#1e293b';
+      ctxP.fillRect(probeX + 20, probeY - 14, 110, 26);
+      ctxP.fillStyle = '#ffffff';
+      ctxP.font = 'bold 11px Poppins';
+      ctxP.textAlign = 'left';
+      ctxP.fillText(convertPres(pTotal), probeX + 26, probeY + 3);
+
+      requestAnimationFrame(renderPressure);
+    }
+    requestAnimationFrame(renderPressure);
+
+    document.getElementById('range-gravity').addEventListener('input', (e) => {
+      gravityP = parseFloat(e.target.value);
+      document.getElementById('val-gravity').textContent = gravityP.toFixed(2) + ' m/s²';
+      updateTab2Formulas();
+    });
+    document.getElementById('range-depth').addEventListener('input', (e) => {
+      depthMetersP = parseFloat(e.target.value);
+      document.getElementById('val-depth').textContent = depthMetersP.toFixed(2) + ' m';
+      updateTab2Formulas();
+    });
+    document.getElementById('check-atmosphere').addEventListener('change', (e) => {
+      hasAtmosphereP = e.target.checked;
+      updateTab2Formulas();
+    });
+
+    /* =========================================================================
+       TAB 3 SIMULATION: PASCAL'S HYDRAULIC LIFT
+       ========================================================================= */
+    const canvasL = document.getElementById('canvas-pascal');
+    const ctxL = canvasL.getContext('2d');
+    let a1L = 0.01;
+    let a2L = 1.00;
+    let f1L = 150;
+    let d1L = 20;
+
+    function updateTab3Formulas() {
+      if (!window.katex) return;
+      const pres = f1L / a1L;
+      const f2 = f1L * (a2L / a1L);
+      const latexContainer = document.getElementById('latex-pascal-formula');
+      katex.render(
+        'P = \\\\frac{F_1}{A_1} = ' + convertPres(pres) + ' \\\\quad \\\\implies \\\\quad F_2 = F_1 \\\\cdot \\\\left(\\\\frac{A_2}{A_1}\\\\right) = ' + f2.toFixed(0) + '\\\\text{ N}',
+        latexContainer,
+        { throwOnError: false }
+      );
+    }
+
+    function renderPascal() {
+      const w = canvasL.clientWidth;
+      const h = canvasL.clientHeight;
+      if (canvasL.width !== w || canvasL.height !== h) {
+        canvasL.width = w; canvasL.height = h;
+      }
+      ctxL.clearRect(0, 0, w, h);
+
+      const p1X = 140, p2X = w - 160;
+      const w1 = 50, w2 = 130;
+      const baseGround = 400;
+      const p1Y = 240 + (d1L / 50) * 80;
+      const p2Y = 240 - ((d1L / 50) * 80) * (w1 / w2);
+
+      // Hydraulic Fluid
+      ctxL.fillStyle = '#38bdf8';
+      ctxL.beginPath();
+      ctxL.moveTo(p1X - w1/2, p1Y);
+      ctxL.lineTo(p1X - w1/2, baseGround);
+      ctxL.lineTo(p2X + w2/2, baseGround);
+      ctxL.lineTo(p2X + w2/2, p2Y);
+      ctxL.lineTo(p2X - w2/2, p2Y);
+      ctxL.lineTo(p2X - w2/2, baseGround - 40);
+      ctxL.lineTo(p1X + w1/2, baseGround - 40);
+      ctxL.lineTo(p1X + w1/2, p1Y);
+      ctxL.closePath();
+      ctxL.fill();
+
+      // Pistons
+      ctxL.fillStyle = '#64748b';
+      ctxL.fillRect(p1X - w1/2, p1Y - 15, w1, 15);
+      ctxL.fillRect(p2X - w2/2, p2Y - 15, w2, 15);
+
+      // Car on Piston 2
+      ctxL.fillStyle = '#ef4444';
+      ctxL.fillRect(p2X - 45, p2Y - 45, 90, 30);
+      ctxL.fillStyle = '#ffffff';
+      ctxL.font = 'bold 10px Poppins';
+      ctxL.textAlign = 'center';
+      ctxL.fillText('Load', p2X, p2Y - 26);
+
+      requestAnimationFrame(renderPascal);
+    }
+    requestAnimationFrame(renderPascal);
+
+    document.getElementById('range-a1').addEventListener('input', (e) => {
+      a1L = parseFloat(e.target.value);
+      document.getElementById('val-a1').textContent = a1L.toFixed(3) + ' m²';
+      updateTab3Formulas();
+    });
+    document.getElementById('range-a2').addEventListener('input', (e) => {
+      a2L = parseFloat(e.target.value);
+      document.getElementById('val-a2').textContent = a2L.toFixed(2) + ' m²';
+      updateTab3Formulas();
+    });
+    document.getElementById('range-f1').addEventListener('input', (e) => {
+      f1L = parseFloat(e.target.value);
+      document.getElementById('val-f1').textContent = f1L + ' N';
+      updateTab3Formulas();
+    });
+    document.getElementById('range-d1').addEventListener('input', (e) => {
+      d1L = parseFloat(e.target.value);
+      document.getElementById('val-d1').textContent = d1L.toFixed(1) + ' cm';
+      updateTab3Formulas();
+    });
+    document.getElementById('btn-pump').addEventListener('click', () => {
+      d1L = d1L >= 45 ? 5 : d1L + 10;
+      document.getElementById('range-d1').value = d1L;
+      document.getElementById('val-d1').textContent = d1L.toFixed(1) + ' cm';
+      updateTab3Formulas();
+    });
+
+    // Initial formula update
+    window.addEventListener('load', () => {
+      updateTab2Formulas();
+      updateTab3Formulas();
+    });
+  </script>
+</body>
+</html>`;
+}

@@ -1,0 +1,248 @@
+import React from 'react';
+import { X, BookOpen, Droplets, Gauge, Cog, ArrowRight, Lightbulb } from 'lucide-react';
+import { MathView } from './MathView.tsx';
+
+interface TheoryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  activeTopic?: 'buoyancy' | 'pressure' | 'pascal';
+}
+
+export const TheoryModal: React.FC<TheoryModalProps> = ({ isOpen, onClose, activeTopic = 'buoyancy' }) => {
+  const [topic, setTopic] = React.useState<'buoyancy' | 'pressure' | 'pascal'>(activeTopic);
+
+  React.useEffect(() => {
+    if (activeTopic) setTopic(activeTopic);
+  }, [activeTopic]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/80">
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 bg-blue-100 text-blue-700 rounded-lg">
+              <BookOpen className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800">Physics Guide & Theory</h2>
+              <p className="text-xs text-slate-500">Fundamental laws of fluid statics with mathematical derivations</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Tab navigation within modal */}
+        <div className="flex border-b border-slate-200 px-6 pt-2 bg-white gap-2">
+          <button
+            onClick={() => setTopic('buoyancy')}
+            className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+              topic === 'buoyancy'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Droplets className="w-4 h-4" />
+            <span>Archimedes & Buoyancy</span>
+          </button>
+          <button
+            onClick={() => setTopic('pressure')}
+            className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+              topic === 'pressure'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Gauge className="w-4 h-4" />
+            <span>Hydrostatic Pressure</span>
+          </button>
+          <button
+            onClick={() => setTopic('pascal')}
+            className={`flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition-colors ${
+              topic === 'pascal'
+                ? 'border-blue-600 text-blue-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            <Cog className="w-4 h-4" />
+            <span>Pascal's Hydraulic Lift</span>
+          </button>
+        </div>
+
+        {/* Modal Content */}
+        <div className="p-6 overflow-y-auto space-y-6 text-slate-700 leading-relaxed text-sm">
+          {topic === 'buoyancy' && (
+            <div className="space-y-5">
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                <h3 className="font-semibold text-blue-900 mb-1 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-blue-600" /> Archimedes' Principle
+                </h3>
+                <p className="text-blue-800 text-xs">
+                  Any object completely or partially submerged in a static fluid experiences an upward buoyant force
+                  equal to the weight of the fluid displaced by the object.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-2">1. Density Formulation</h4>
+                  <p className="text-xs text-slate-600 mb-2">Mass density defines mass per unit volume:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="\rho = \frac{m}{V} \quad \left[\text{kg/m}^3\right]" display />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-2">2. Buoyant Force Equation</h4>
+                  <p className="text-xs text-slate-600 mb-2">Upward force generated by displaced fluid weight:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="F_b = m_{\text{disp}} g = \rho_{\text{fluid}} \cdot V_{\text{sub}} \cdot g" display />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl p-4">
+                <h4 className="font-semibold text-slate-800 mb-3">Conditions for Equilibrium & Flotation</h4>
+                <div className="grid md:grid-cols-3 gap-3 text-xs">
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div className="font-semibold text-amber-800 mb-1">Float (Sinks partially)</div>
+                    <p className="text-amber-900 mb-2"><MathView math="\rho_{\text{obj}} < \rho_{\text{fluid}}" /></p>
+                    <p className="text-slate-600">Submerged fraction is exactly the ratio of densities:</p>
+                    <div className="mt-2 font-mono text-[11px] text-amber-900 bg-white/80 p-1.5 rounded">
+                      <MathView math="\frac{V_{\text{sub}}}{V} = \frac{\rho_{\text{obj}}}{\rho_{\text{fluid}}}" />
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <div className="font-semibold text-emerald-800 mb-1">Neutral Buoyancy</div>
+                    <p className="text-emerald-900 mb-2"><MathView math="\rho_{\text{obj}} = \rho_{\text{fluid}}" /></p>
+                    <p className="text-slate-600">Hover at any depth without sinking or bobbing to the top (<MathView math="F_b = W" /> everywhere).</p>
+                  </div>
+
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg">
+                    <div className="font-semibold text-rose-800 mb-1">Sink (Floor Contact)</div>
+                    <p className="text-rose-900 mb-2"><MathView math="\rho_{\text{obj}} > \rho_{\text{fluid}}" /></p>
+                    <p className="text-slate-600">Downward weight exceeds maximum buoyant force. Normal force from floor balances remainder: <MathView math="N = W - F_b" />.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-slate-500 bg-slate-50 p-3 rounded-lg border border-slate-200">
+                <strong>Why does Ice float?</strong> Pure water expands upon freezing into a hexagonal crystalline lattice, reducing its density to <MathView math="917\text{ kg/m}^3" />. In fresh water (<MathView math="1000\text{ kg/m}^3" />), an iceberg sits with <MathView math="91.7\%" /> submerged and <MathView math="8.3\%" /> visible above water.
+              </div>
+            </div>
+          )}
+
+          {topic === 'pressure' && (
+            <div className="space-y-5">
+              <div className="bg-sky-50 border border-sky-200 rounded-xl p-4">
+                <h3 className="font-semibold text-sky-900 mb-1 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-sky-600" /> Hydrostatic Equation
+                </h3>
+                <p className="text-sky-800 text-xs">
+                  In a static fluid at rest under gravity, the pressure depends solely on depth <MathView math="h" />, fluid density <MathView math="\rho" />, and local acceleration due to gravity <MathView math="g" />.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-1">Absolute Pressure</h4>
+                  <p className="text-xs text-slate-600 mb-2">Total pressure including atmospheric pressure at the open surface:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="P_{\text{total}} = P_0 + \rho g h" display />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-1">Gauge Pressure</h4>
+                  <p className="text-xs text-slate-600 mb-2">Pressure measured relative to ambient atmosphere:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="P_{\text{gauge}} = P_{\text{total}} - P_0 = \rho g h" display />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+                <h4 className="font-semibold text-slate-800">The Hydrostatic Paradox (Stevin's Law)</h4>
+                <p className="text-xs text-slate-600 leading-normal">
+                  The liquid pressure at any given depth <MathView math="h" /> is identical regardless of the tank's shape, surface area, or total volume of fluid contained. Whether inside a narrow capillary tube or a vast ocean reservoir, pressure at depth <MathView math="h = 2\text{ m}" /> in water is consistently <MathView math="\approx 19.6\text{ kPa}" /> above surface pressure.
+                </p>
+                <div className="bg-slate-100 p-3 rounded-lg text-xs text-slate-700">
+                  <strong>Key Rule:</strong> Fluid pressure acts isotropically (equally in all directions—upward, downward, and sideways) against any submerged surface or sensor probe.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {topic === 'pascal' && (
+            <div className="space-y-5">
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4">
+                <h3 className="font-semibold text-indigo-900 mb-1 flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-indigo-600" /> Pascal's Principle
+                </h3>
+                <p className="text-indigo-800 text-xs">
+                  A change in pressure applied to an enclosed, incompressible static fluid is transmitted undiminished and instantaneously to every portion of the fluid and the walls of its container.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-1">Pressure Equality</h4>
+                  <p className="text-xs text-slate-600 mb-2">Pressure at Piston 1 equals pressure at Piston 2:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="P_1 = P_2 \iff \frac{F_1}{A_1} = \frac{F_2}{A_2}" display />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                  <h4 className="font-medium text-slate-800 mb-1">Force Multiplication</h4>
+                  <p className="text-xs text-slate-600 mb-2">Amplified output force from area ratio:</p>
+                  <div className="p-2.5 bg-white rounded-lg border border-slate-200 text-center">
+                    <MathView math="F_2 = F_1 \left(\frac{A_2}{A_1}\right) = F_1 \cdot \text{MA}" display />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-slate-200 rounded-xl p-4 space-y-3">
+                <h4 className="font-semibold text-slate-800">Conservation of Energy & Incompressible Volume</h4>
+                <p className="text-xs text-slate-600">
+                  No machine creates free energy. The volume of fluid pushed down by Piston 1 must equal the volume gained by Piston 2:
+                </p>
+                <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                  <MathView math="\Delta V = A_1 d_1 = A_2 d_2 \implies d_2 = d_1 \left(\frac{A_1}{A_2}\right)" display />
+                </div>
+                <p className="text-xs text-slate-600">
+                  Consequently, input work strictly equals output work (assuming negligible friction):
+                </p>
+                <div className="p-2.5 bg-slate-50 rounded-lg border border-slate-200 text-center">
+                  <MathView math="W_1 = F_1 d_1 = \left(\frac{F_2}{\text{MA}}\right)(d_2 \cdot \text{MA}) = F_2 d_2 = W_2" display />
+                </div>
+                <div className="text-xs text-slate-500 italic">
+                  Trade-off: Force is multiplied by factor <MathView math="\text{MA}" />, but displacement is divided by the exact same factor <MathView math="\text{MA}" />!
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-slate-100 bg-slate-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition-colors"
+          >
+            Got it, back to Lab
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

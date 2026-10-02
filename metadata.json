@@ -1,0 +1,6 @@
+{
+  "name": "Static Fluids Physics Simulation",
+  "description": "Interactive HTML5 Canvas physics laboratory simulating fluid statics, buoyancy, hydrostatic pressure, and hydraulic lifts with real-time KaTeX LaTeX derivations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
